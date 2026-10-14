@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracki</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128188;</text></svg>">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">T</span>
+    <div>
+      <h1>Tracki</h1>
+      <p class="brand-sub">Job application tracker</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button id="add-job" class="btn btn-primary">+ Add job</button>
+    <div class="menu">
+      <button id="export-menu-btn" class="btn" aria-haspopup="true" aria-expanded="false">Export &#9662;</button>
+      <div id="export-menu" class="menu-panel" hidden>
+        <a href="/api/export.xlsx" class="menu-item">Excel workbook (.xlsx)</a>
+        <a href="/api/export.csv" class="menu-item">CSV (.csv)</a>
+        <a href="/api/export.json" class="menu-item">Backup (.json)</a>
+        <hr>
+        <a href="/api/export.xlsx?scope=filtered" class="menu-item" id="export-filtered">Excel - current filter only</a>
+        <button class="menu-item" id="import-btn" type="button">Import from backup&hellip;</button>
+      </div>
+    </div>
+    <button id="settings-btn" class="btn" title="Parsable CV connection">Settings</button>
+  </div>
+</header>
+
+<section class="stats" id="stats"></section>
+
+<section class="toolbar">
+  <input id="search" type="search" class="search" placeholder="Search role, company, notes, tags&hellip;" autocomplete="off">
+  <select id="filter-status" class="select">
+    <option value="open">Open applications</option>
+    <option value="all">All statuses</option>
+  </select>
+  <select id="sort" class="select">
+    <option value="updatedAt">Recently updated</option>
+    <option value="dateApplied">Date applied</option>
+    <option value="nextActionDate">Next action date</option>
+    <option value="company">Company</option>
+    <option value="role">Role</option>
+    <option value="priority">Priority</option>
+  </select>
+  <span class="result-count" id="result-count"></span>
+</section>
+
+<section id="reminders" class="reminders" hidden></section>
+
+<main>
+  <div class="table-wrap">
+    <table class="jobs" id="jobs-table">
+      <thead>
+        <tr>
+          <th>Role</th>
+          <th>Company</th>
+          <th>Status</th>
+          <th>Applied</th>
+          <th>Next action</th>
+          <th>Link</th>
+          <th class="col-actions"></th>
+        </tr>
+      </thead>
+      <tbody id="jobs-body"></tbody>
+    </table>
+  </div>
+  <div id="empty-state" class="empty" hidden>
+    <h2>No jobs here yet</h2>
+    <p>Add one by hand, or save a CV in Parsable CV and say yes when Tracki asks.</p>
+    <button class="btn btn-primary" id="empty-add">+ Add your first job</button>
+  </div>
+</main>
+
+<!-- "Save CV -> add to tracker?" dialog -->
+<dialog id="intake-dialog" class="dialog">
+  <form id="intake-form" method="dialog">
+    <header class="dialog-head">
+      <h2>Add this job to Tracki?</h2>
+      <p id="intake-sub" class="dialog-sub"></p>
+    </header>
+    <div id="intake-duplicate" class="banner banner-warn" hidden></div>
+    <div class="grid-2" id="intake-fields"></div>
+    <footer class="dialog-foot">
+      <span id="intake-count" class="muted"></span>
+      <div class="dialog-buttons">
+        <button type="button" class="btn" id="intake-dismiss">Not this one</button>
+        <button type="button" class="btn btn-primary" id="intake-accept">Add to tracker</button>
+      </div>
+    </footer>
+  </form>
+</dialog>
+
+<!-- full add/edit form -->
+<dialog id="job-dialog" class="dialog dialog-wide">
+  <form id="job-form" method="dialog">
+    <header class="dialog-head">
+      <h2 id="job-dialog-title">Add job</h2>
+      <p class="dialog-sub">Required fields are marked with *</p>
+    </header>
+    <div id="job-errors" class="banner banner-error" hidden></div>
+    <div id="job-fields"></div>
+    <div id="job-history" class="history" hidden></div>
+    <footer class="dialog-foot">
+      <button type="button" class="btn btn-danger" id="job-delete" hidden>Delete</button>
+      <div class="dialog-buttons">
+        <button type="button" class="btn" id="job-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="job-save">Save</button>
+      </div>
+    </footer>
+  </form>
+</dialog>
+
+<!-- Parsable CV connection settings -->
+<dialog id="settings-dialog" class="dialog">
+  <form id="settings-form" method="dialog">
+    <header class="dialog-head">
+      <h2>Parsable CV connection</h2>
+      <p class="dialog-sub">Tracki watches this folder and asks before adding anything.</p>
+    </header>
+    <div id="settings-status" class="banner" hidden></div>
+    <label class="field">
+      <span class="field-label">Parsable CV output folder</span>
+      <input type="text" id="cv-path" class="input" placeholder="D:\claude code repo\Parsable CV\output" spellcheck="false">
+      <small class="hint">The folder your CVs are saved into. Paste the full path.</small>
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" id="watch-toggle" checked>
+      <span>Ask me about a job whenever a CV is saved there</span>
+    </label>
+    <div class="snippet">
+      <p class="field-label">Wiring it into the Parsable CV app</p>
+      <p class="hint">Add this one line to Parsable CV's page and call <code>Tracki.onCvSaved(...)</code> after a save. Full instructions are in <code>integration/README.md</code>.</p>
+      <pre id="snippet-code"></pre>
+      <button type="button" class="btn btn-small" id="copy-snippet">Copy line</button>
+    </div>
+    <footer class="dialog-foot">
+      <span class="muted" id="data-file-path"></span>
+      <div class="dialog-buttons">
+        <button type="button" class="btn" id="settings-cancel">Close</button>
+        <button type="button" class="btn btn-primary" id="settings-save">Save</button>
+      </div>
+    </footer>
+  </form>
+</dialog>
+
+<input type="file" id="import-file" accept=".json" hidden>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>

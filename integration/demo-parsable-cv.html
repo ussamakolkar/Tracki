@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parsable CV (demo) - Tracki integration test</title>
+<style>
+  body { font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f5f7fa; color: #16202b; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 32px 20px 60px; }
+  h1 { font-size: 21px; margin: 0 0 4px; }
+  p.sub { color: #5d6b7a; margin: 0 0 24px; font-size: 14px; }
+  .panel { background: #fff; border: 1px solid #d9e0e8; border-radius: 12px; padding: 20px 22px; margin-bottom: 18px; }
+  label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #5d6b7a; margin: 12px 0 4px; }
+  input, textarea { font: inherit; width: 100%; padding: 9px 10px; border: 1px solid #d9e0e8; border-radius: 8px; box-sizing: border-box; }
+  button { font: inherit; padding: 10px 16px; border-radius: 8px; border: 1px solid #1f6feb; background: #1f6feb; color: #fff; cursor: pointer; margin-top: 16px; }
+  button.secondary { background: #eef2f7; color: #16202b; border-color: #d9e0e8; }
+  .status { font-size: 13px; color: #5d6b7a; margin-top: 12px; }
+  code { background: #eef2f7; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #11161c; color: #e6edf3; }
+    .panel { background: #1a212a; border-color: #2f3a47; }
+    input, textarea { background: #11161c; color: #e6edf3; border-color: #2f3a47; }
+    code { background: #222b36; }
+    button.secondary { background: #222b36; color: #e6edf3; border-color: #2f3a47; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Parsable CV <span style="font-weight:400;color:#5d6b7a">(demo stand-in)</span></h1>
+  <p class="sub">
+    This page pretends to be your Parsable CV app. Press <strong>Save CV</strong> and the Tracki
+    dialogue box appears, exactly as it will in the real app once the bridge line is added.
+  </p>
+
+  <div class="panel">
+    <label for="role">Target role</label>
+    <input id="role" name="role" value="Senior Backend Engineer">
+    <label for="company">Company</label>
+    <input id="company" name="company" value="Acme Corp">
+    <label for="jobUrl">Job link</label>
+    <input id="jobUrl" name="jobUrl" value="https://acme.example.com/careers/42">
+    <label for="location">Location</label>
+    <input id="location" name="location" value="Manchester (hybrid)">
+
+    <button id="save" data-tracki-save>Save CV</button>
+    <button id="save-quiet" class="secondary" type="button">Save without asking</button>
+    <p class="status" id="status">Tracki: checking&hellip;</p>
+  </div>
+
+  <div class="panel">
+    <p style="margin:0 0 8px"><strong>What the real wiring looks like</strong></p>
+    <p style="margin:0;font-size:14px">One line in your page, then one call after your save finishes:</p>
+    <pre style="overflow-x:auto"><code>&lt;script src="http://127.0.0.1:4321/integration/tracki-bridge.js"&gt;&lt;/script&gt;
+
+// after Parsable CV has written the file:
+Tracki.onCvSaved({ role, company, jobUrl, cvFilePath });</code></pre>
+  </div>
+</div>
+
+<script src="http://127.0.0.1:4321/integration/tracki-bridge.js"></script>
+<script>
+  const value = (id) => document.getElementById(id).value;
+
+  function cvDetails() {
+    return {
+      role: value('role'),
+      company: value('company'),
+      jobUrl: value('jobUrl'),
+      location: value('location'),
+      cvVersion: 'CV_' + value('company').replace(/\W+/g, '-') + '_v1',
+      cvFilePath: 'D:\\claude code repo\\Parsable CV\\output\\CV_' + value('company').replace(/\W+/g, '-') + '_v1.pdf',
+    };
+  }
+
+  document.getElementById('save').addEventListener('click', async (event) => {
+    event.preventDefault();
+    // ... your real save happens here ...
+    const job = await Tracki.onCvSaved(cvDetails());
+    document.getElementById('status').textContent = job
+      ? `Added to Tracki: ${job.role} at ${job.company}`
+      : 'Not added to Tracki.';
+  });
+
+  document.getElementById('save-quiet').addEventListener('click', async () => {
+    try {
+      const result = await Tracki.addJob(cvDetails());
+      document.getElementById('status').textContent = `Added without asking: ${result.job.role}`;
+    } catch (err) {
+      document.getElementById('status').textContent = err.message;
+    }
+  });
+
+  Tracki.ping().then((info) => {
+    document.getElementById('status').textContent = info
+      ? `Tracki is running - ${info.jobs} job(s) on the tracker.`
+      : 'Tracki is not running. Start it with "npm start" in the Tracki folder.';
+  });
+</script>
+</body>
+</html>

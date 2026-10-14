@@ -1,0 +1,14 @@
+{
+  "name": "tracki",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tracki - a local-first job application tracker with Parsable CV integration and Excel export",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/run-tests.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}

@@ -1,0 +1,10 @@
+node_modules/
+data/*.json
+data/backups/
+data/*.xlsx
+data/*.csv
+tracki.config.json
+*.log
+.DS_Store
+tracki-commit.bundle
+tracki-commit.patch
