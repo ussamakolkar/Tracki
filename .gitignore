@@ -6,5 +6,3 @@ data/*.csv
 tracki.config.json
 *.log
 .DS_Store
-tracki-commit.bundle
-tracki-commit.patch

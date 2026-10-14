@@ -14,6 +14,24 @@ tracker is a single JSON file you can copy, back up or move.
 +-----------------+                    +---------------------+          +----------------+
 ```
 
+## What it looks like
+
+The dialogue box, raised inside the Parsable CV window the moment a CV is saved.
+Every field is pre-filled where Tracki could work it out, and editable before you
+commit to it:
+
+![The "add this job to your tracker?" dialogue inside Parsable CV](docs/screenshots/cv-save-dialog.png)
+
+The tracker itself: pipeline status on every row, overdue follow-ups called out at
+the top, and the dashboard across the header.
+
+![The Tracki job tracker window](docs/screenshots/tracker.png)
+
+When Tracki is watching the CV folder instead, the same question is asked in the
+Tracki window, with the role, company and link read out of the saved CV:
+
+![The same prompt raised by the folder watcher](docs/screenshots/watcher-dialog.png)
+
 ## Requirements
 
 Node.js 18 or newer. Nothing else — Tracki has **zero npm dependencies**, including
@@ -44,6 +62,8 @@ and save. From then on, whenever a CV file appears there, the Tracki window rais
 the "Add this job to Tracki?" dialogue with the role, company and job link already
 filled in where it could work them out (from the CV's JSON, its text, a sidecar
 `.json`, or failing that the filename).
+
+![Tracki's Parsable CV connection settings](docs/screenshots/settings.png)
 
 ### 2. Ask inside Parsable CV itself (one line of code)
 
